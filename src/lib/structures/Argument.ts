@@ -1,10 +1,11 @@
 import { AliasPiece } from '@sapphire/pieces';
 import type { Result } from '@sapphire/result';
 import type { Awaitable } from '@sapphire/utilities';
-import type { Message } from 'discord.js';
+import type { CommandInteractionOption, Message } from 'discord.js';
 import type { ArgumentError } from '../errors/ArgumentError';
 import { Args } from '../parsers/Args';
-import type { MessageCommand } from '../types/CommandTypes';
+import { Command } from './Command';
+import type { AnyInteraction } from '@sapphire/discord.js-utilities';
 
 /**
  * Defines a synchronous result of an {@link Argument}, check {@link Argument.AsyncResult} for the asynchronous version.
@@ -32,7 +33,7 @@ export interface IArgument<T> {
 	 * @param parameter The string parameter to parse.
 	 * @param context The context for the method call, contains the message, command, and other options.
 	 */
-	run(parameter: string, context: Argument.Context<T>): Argument.AwaitableResult<T>;
+	run(parameter: string | CommandInteractionOption, context: Argument.Context<T>): Argument.AwaitableResult<T>;
 }
 
 /**
@@ -133,9 +134,9 @@ export interface ArgumentOptions extends AliasPiece.Options {}
 export interface ArgumentContext<T = unknown> extends Record<PropertyKey, unknown> {
 	argument: IArgument<T>;
 	args: Args;
-	message: Message;
-	command: MessageCommand;
-	commandContext: MessageCommand.RunContext;
+	messageOrInteraction: Message | AnyInteraction;
+	command: Command;
+	commandContext: Record<PropertyKey, unknown>;
 	minimum?: number;
 	maximum?: number;
 	inclusive?: boolean;

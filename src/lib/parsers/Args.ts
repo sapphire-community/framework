@@ -1,11 +1,12 @@
-import type { ChannelTypes, GuildBasedChannelTypes } from '@sapphire/discord.js-utilities';
-import { join, type ArgumentStream, type Parameter } from '@sapphire/lexure';
+import type { AnyInteraction, ChannelTypes, GuildBasedChannelTypes } from '@sapphire/discord.js-utilities';
+import { join, type Parameter } from '@sapphire/lexure';
 import { container } from '@sapphire/pieces';
 import { Option, Result } from '@sapphire/result';
 import type { Awaitable } from '@sapphire/utilities';
 import type {
 	CategoryChannel,
 	ChannelType,
+	ChatInputCommandInteraction,
 	DMChannel,
 	GuildMember,
 	Message,
@@ -23,41 +24,47 @@ import { Identifiers } from '../errors/Identifiers';
 import { UserError } from '../errors/UserError';
 import type { EmojiObject } from '../resolvers/emoji';
 import type { Argument, IArgument } from '../structures/Argument';
-import type { MessageCommand } from '../types/CommandTypes';
+import { Command } from '../structures/Command';
+import type { Parser, Arg } from './Parser';
 
 /**
  * The argument parser to be used in {@link Command}.
  */
 export class Args {
 	/**
-	 * The original message that triggered the command.
+	 * The original message or interaction that triggered the command.
 	 */
-	public readonly message: Message;
+	public readonly messageOrInteraction: Message | ChatInputCommandInteraction;
 
 	/**
 	 * The command that is being run.
 	 */
-	public readonly command: MessageCommand;
+	public readonly command: Command;
 
 	/**
 	 * The context of the command being run.
 	 */
-	public readonly commandContext: MessageCommand.RunContext;
+	public readonly commandContext: Record<PropertyKey, unknown>;
 
 	/**
 	 * The internal Lexure parser.
 	 */
-	protected readonly parser: ArgumentStream;
+	protected readonly parser: Parser;
 
 	/**
 	 * The states stored in the args.
 	 * @see Args#save
 	 * @see Args#restore
 	 */
-	private readonly states: ArgumentStream.State[] = [];
+	private readonly states: unknown[] = [];
 
-	public constructor(message: Message, command: MessageCommand, parser: ArgumentStream, context: MessageCommand.RunContext) {
-		this.message = message;
+	public constructor(
+		messageOrInteraction: Message | ChatInputCommandInteraction,
+		command: Command,
+		parser: Parser,
+		context: Record<PropertyKey, unknown>
+	) {
+		this.messageOrInteraction = messageOrInteraction;
 		this.command = command;
 		this.parser = parser;
 		this.commandContext = context;
@@ -127,7 +134,7 @@ export class Args {
 			argument.run(arg, {
 				args: this,
 				argument,
-				message: this.message,
+				messageOrInteraction: this.messageOrInteraction,
 				command: this.command,
 				commandContext: this.commandContext,
 				...options
@@ -233,7 +240,7 @@ export class Args {
 		const result = await argument.run(data, {
 			args: this,
 			argument,
-			message: this.message,
+			messageOrInteraction: this.messageOrInteraction,
 			command: this.command,
 			commandContext: this.commandContext,
 			...options
@@ -322,7 +329,7 @@ export class Args {
 				argument.run(arg, {
 					args: this,
 					argument,
-					message: this.message,
+					messageOrInteraction: this.messageOrInteraction,
 					command: this.command,
 					commandContext: this.commandContext,
 					...options
@@ -540,7 +547,7 @@ export class Args {
 	 * // -> { exists: true, value: '1' }
 	 * ```
 	 */
-	public nextMaybe(): Option<string>;
+	public nextMaybe(): Option<Arg>;
 	/**
 	 * Retrieves the value of the next unused ordered token, but only if it could be transformed.
 	 * That token will now be used if the transformation succeeds.
@@ -559,8 +566,8 @@ export class Args {
 	 * ```
 	 */
 	public nextMaybe<T>(cb: ArgsNextCallback<T>): Option<T>;
-	public nextMaybe<T>(cb?: ArgsNextCallback<T>): Option<T | string> {
-		return Option.from<T | string>(typeof cb === 'function' ? this.parser.singleMap(cb) : this.parser.single());
+	public nextMaybe<T>(cb?: ArgsNextCallback<T>): Option<T | Arg> {
+		return Option.from<T | Arg>(typeof cb === 'function' ? this.parser.singleMap(cb) : this.parser.single());
 	}
 
 	/**
@@ -591,8 +598,8 @@ export class Args {
 	 * ```
 	 */
 	public next<T>(cb: ArgsNextCallback<T>): T;
-	public next<T>(cb?: ArgsNextCallback<T>): T | string | null {
-		const value = cb ? this.nextMaybe<T | string | null>(cb) : this.nextMaybe();
+	public next<T>(cb?: ArgsNextCallback<T>): T | Arg | null {
+		const value = cb ? this.nextMaybe<T | Arg | null>(cb) : this.nextMaybe();
 		return value.unwrapOr(null);
 	}
 
@@ -730,7 +737,7 @@ export class Args {
 	 * Defines the `JSON.stringify` override.
 	 */
 	public toJSON(): ArgsJson {
-		return { message: this.message, command: this.command, commandContext: this.commandContext };
+		return { message: this.messageOrInteraction, command: this.command, commandContext: this.commandContext };
 	}
 
 	protected unavailableArgument<T>(type: string | IArgument<T>): Result.Err<UserError> {
@@ -784,9 +791,9 @@ export class Args {
 }
 
 export interface ArgsJson {
-	message: Message<boolean>;
-	command: MessageCommand;
-	commandContext: MessageCommand.RunContext;
+	message: Message | AnyInteraction;
+	command: Command;
+	commandContext: Record<PropertyKey, unknown>;
 }
 
 export interface ArgType {
@@ -835,7 +842,7 @@ export interface ArgsNextCallback<T> {
 	/**
 	 * The value to be mapped.
 	 */
-	(value: string): Option<T>;
+	(value: Arg): Option<T>;
 }
 
 export type ResultType<T> = Result<T, UserError | ArgumentError<T>>;

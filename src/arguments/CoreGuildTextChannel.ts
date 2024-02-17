@@ -10,7 +10,7 @@ export class CoreArgument extends Argument<TextChannel> {
 	}
 
 	public run(parameter: string, context: Argument.Context): Argument.Result<TextChannel> {
-		const { guild } = context.message;
+		const { guild } = context.messageOrInteraction;
 		if (!guild) {
 			return this.error({
 				parameter,

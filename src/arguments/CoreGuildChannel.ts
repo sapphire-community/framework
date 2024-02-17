@@ -10,7 +10,7 @@ export class CoreArgument extends Argument<GuildBasedChannelTypes> {
 	}
 
 	public run(parameter: string, context: Argument.Context): Argument.Result<GuildBasedChannelTypes> {
-		const { guild } = context.message;
+		const { guild } = context.messageOrInteraction;
 		if (!guild) {
 			return this.error({
 				parameter,

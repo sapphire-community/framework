@@ -1,12 +1,12 @@
-import { isDMChannel } from '@sapphire/discord.js-utilities';
+import { isDMChannel, type AnyInteraction } from '@sapphire/discord.js-utilities';
 import { Result } from '@sapphire/result';
-import type { CommandInteraction, DMChannel, Message } from 'discord.js';
+import type { DMChannel, Message } from 'discord.js';
 import { Identifiers } from '../errors/Identifiers';
 import { resolveChannel } from './channel';
 
 export function resolveDMChannel(
 	parameter: string,
-	messageOrInteraction: Message | CommandInteraction
+	messageOrInteraction: Message | AnyInteraction
 ): Result<DMChannel, Identifiers.ArgumentChannelError | Identifiers.ArgumentDMChannelError> {
 	const result = resolveChannel(parameter, messageOrInteraction);
 	return result.mapInto((value) => {

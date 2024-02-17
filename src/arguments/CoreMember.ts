@@ -11,7 +11,7 @@ export class CoreArgument extends Argument<GuildMember> {
 	}
 
 	public async run(parameter: string, context: MemberArgumentContext): Argument.AsyncResult<GuildMember> {
-		const { guild } = context.message;
+		const { guild } = context.messageOrInteraction;
 
 		if (!guild) {
 			return this.error({

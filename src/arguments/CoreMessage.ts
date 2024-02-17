@@ -10,9 +10,9 @@ export class CoreArgument extends Argument<Message> {
 	}
 
 	public async run(parameter: string, context: MessageArgumentContext): Argument.AsyncResult<Message> {
-		const channel = context.channel ?? context.message.channel;
+		const channel = context.channel ?? context.messageOrInteraction.channel;
 		const resolved = await resolveMessage(parameter, {
-			messageOrInteraction: context.message,
+			messageOrInteraction: context.messageOrInteraction,
 			channel: context.channel,
 			scan: context.scan ?? false
 		});

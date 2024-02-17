@@ -1,4 +1,4 @@
-import { isDMChannel } from '@sapphire/discord.js-utilities';
+import { isDMChannel, type AnyInteraction } from '@sapphire/discord.js-utilities';
 import { Result } from '@sapphire/result';
 import type { DMChannel, Message, PartialDMChannel } from 'discord.js';
 import { Identifiers } from '../errors/Identifiers';
@@ -6,7 +6,7 @@ import { resolveChannel } from './channel';
 
 export function resolvePartialDMChannel(
 	parameter: string,
-	message: Message
+	message: Message | AnyInteraction
 ): Result<DMChannel | PartialDMChannel, Identifiers.ArgumentChannelError | Identifiers.ArgumentDMChannelError> {
 	const result = resolveChannel(parameter, message);
 	return result.mapInto((channel) => {

@@ -9,7 +9,7 @@ export class CoreArgument extends Argument<DMChannel> {
 	}
 
 	public run(parameter: string, context: Argument.Context): Argument.Result<DMChannel> {
-		const resolved = resolveDMChannel(parameter, context.message);
+		const resolved = resolveDMChannel(parameter, context.messageOrInteraction);
 		return resolved.mapErrInto((identifier) =>
 			this.error({
 				parameter,
