@@ -30,6 +30,8 @@ import { emitPerRegistryError } from '../utils/application-commands/registriesEr
 import { PreconditionContainerArray } from '../utils/preconditions/PreconditionContainerArray';
 import { FlagUnorderedStrategy } from '../utils/strategies/FlagUnorderedStrategy';
 import { ChatInputParser } from '../parsers/ChatInputParser';
+import { MessageArgs } from '../..';
+import { ChatInputCommandArgs } from '../parsers/ChatInputCommandArgs';
 
 const ChannelTypes = Object.values(ChannelType).filter((type) => typeof type === 'number') as readonly ChannelType[];
 const GuildChannelTypes = ChannelTypes.filter((type) => type !== ChannelType.DM && type !== ChannelType.GroupDM) as readonly ChannelType[];
@@ -154,12 +156,12 @@ export class Command<PreParseReturn = Args, Options extends Command.Options = Co
 	public messagePreParse(message: Message, parameters: string, context: MessageCommand.RunContext): Awaitable<PreParseReturn> {
 		const parser = new Parser(this.strategy);
 		const args = new ArgumentStream(parser.run(this.lexer.run(parameters)));
-		return new Args(message, this as Command, args, context) as PreParseReturn;
+		return new MessageArgs(message, this as Command, args, context) as PreParseReturn;
 	}
 
 	public chatInputPreParse(interaction: ChatInputCommandInteraction, context: ChatInputCommand.RunContext): Awaitable<PreParseReturn> {
-		const args = new ChatInputParser(interaction);
-		return new Args(interaction, this as Command, args, context) as PreParseReturn;
+		const parser = new ChatInputParser(interaction);
+		return new ChatInputCommandArgs(interaction, this as Command, parser, context) as PreParseReturn;
 	}
 
 	/**

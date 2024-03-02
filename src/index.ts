@@ -71,7 +71,7 @@ export * from './lib/errors/ArgumentError';
 export * from './lib/errors/Identifiers';
 export * from './lib/errors/PreconditionError';
 export * from './lib/errors/UserError';
-export * from './lib/parsers/Args';
+export * from './lib/parsers/MessageArgs';
 export * from './lib/plugins/Plugin';
 export * from './lib/plugins/PluginManager';
 export * from './lib/plugins/symbols';
