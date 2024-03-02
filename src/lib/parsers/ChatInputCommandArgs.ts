@@ -1,32 +1,21 @@
-import type { AnyInteraction, ChannelTypes, GuildBasedChannelTypes } from '@sapphire/discord.js-utilities';
 import { join, type Parameter } from '@sapphire/lexure';
-import { container } from '@sapphire/pieces';
-import { Option, Result } from '@sapphire/result';
-import type {
-	CategoryChannel,
-	ChannelType,
-	ChatInputCommandInteraction,
-	CommandInteraction,
-	DMChannel,
-	GuildMember,
-	Message,
-	NewsChannel,
-	Role,
-	StageChannel,
-	TextChannel,
-	ThreadChannel,
-	User,
-	VoiceChannel
-} from 'discord.js';
-import type { URL } from 'node:url';
+import { Result } from '@sapphire/result';
+import type { ChatInputCommandInteraction, CommandInteractionOption } from 'discord.js';
 import { ArgumentError } from '../errors/ArgumentError';
-import { Identifiers } from '../errors/Identifiers';
 import { UserError } from '../errors/UserError';
-import type { EmojiObject } from '../resolvers/emoji';
-import type { IArgument } from '../structures/Argument';
 import { Command } from '../structures/Command';
-import { Args, type ArgsOptions, type InferArgReturnType, type PeekArgsOptions, type RepeatArgsOptions } from './Args';
+import {
+	Args,
+	type ArgsJson,
+	type ArgsOptions,
+	type ArrayResultType,
+	type InferArgReturnType,
+	type PeekArgsOptions,
+	type RepeatArgsOptions,
+	type ResultType
+} from './Args';
 import type { ChatInputParser } from './ChatInputParser';
+import type { ChatInputCommand } from '../types/CommandTypes';
 
 /**
  * The argument parser to be used in {@link Command}.
@@ -40,7 +29,7 @@ export class ChatInputCommandArgs extends Args {
 	/**
 	 * The command that is being run.
 	 */
-	public readonly command: Command;
+	public readonly command: ChatInputCommand;
 
 	/**
 	 * The context of the command being run.
@@ -57,9 +46,14 @@ export class ChatInputCommandArgs extends Args {
 	 * @see Args#save
 	 * @see Args#restore
 	 */
-	private readonly states: number[] = [];
+	private readonly states: Set<CommandInteractionOption>[] = [];
 
-	public constructor(interaction: ChatInputCommandInteraction, command: Command, parser: ChatInputParser, context: Record<PropertyKey, unknown>) {
+	public constructor(
+		interaction: ChatInputCommandInteraction,
+		command: ChatInputCommand,
+		parser: ChatInputParser,
+		context: Record<PropertyKey, unknown>
+	) {
 		super();
 		this.interaction = interaction;
 		this.command = command;
@@ -126,7 +120,7 @@ export class ChatInputCommandArgs extends Args {
 		const argument = this.resolveArgument(options.type);
 		if (!argument) return this.unavailableArgument(options.type);
 
-		const result = await this.parser.singleParseAsync(async (arg) =>
+		const result = await this.parser.singleParseAsync(options.name, async (arg) =>
 			argument.run(arg, {
 				args: this,
 				argument,
@@ -317,7 +311,7 @@ export class ChatInputCommandArgs extends Args {
 		const output: InferArgReturnType<T>[] = [];
 
 		for (let i = 0, times = options.times ?? Infinity; i < times; i++) {
-			const result = await this.parser.singleParseAsync(async (arg) =>
+			const result = await this.parser.singleParseAsync(options.name, async (arg) =>
 				argument.run(arg, {
 					args: this,
 					argument,
@@ -551,76 +545,4 @@ export class ChatInputCommandArgs extends Args {
 	public toJSON(): ArgsJson {
 		return { message: this.interaction, command: this.command, commandContext: this.commandContext };
 	}
-
-	protected unavailableArgument<T>(type: string | IArgument<T>): Result.Err<UserError> {
-		const name = typeof type === 'string' ? type : type.name;
-		return Result.err(
-			new UserError({
-				identifier: Identifiers.ArgsUnavailable,
-				message: `The argument "${name}" was not found.`,
-				context: { name, ...this.toJSON() }
-			})
-		);
-	}
-
-	protected missingArguments(): Result.Err<UserError> {
-		return Result.err(new UserError({ identifier: Identifiers.ArgsMissing, message: 'There are no more arguments.', context: this.toJSON() }));
-	}
-
-	/**
-	 * Resolves an argument.
-	 * @param arg The argument name or {@link IArgument} instance.
-	 */
-	private resolveArgument<T>(arg: keyof ArgType | IArgument<T>): IArgument<T> | undefined {
-		if (typeof arg === 'object') return arg;
-		return container.stores.get('arguments').get(arg as string) as IArgument<T> | undefined;
-	}
 }
-
-export interface ArgsJson {
-	message: Message | AnyInteraction;
-	command: Command;
-	commandContext: Record<PropertyKey, unknown>;
-}
-
-export interface ArgType {
-	boolean: boolean;
-	channel: ChannelTypes;
-	date: Date;
-	dmChannel: DMChannel;
-	emoji: EmojiObject;
-	float: number;
-	guildCategoryChannel: CategoryChannel;
-	guildChannel: GuildBasedChannelTypes;
-	guildNewsChannel: NewsChannel;
-	guildNewsThreadChannel: ThreadChannel & { type: ChannelType.AnnouncementThread; parent: NewsChannel | null };
-	guildPrivateThreadChannel: ThreadChannel & { type: ChannelType.PrivateThread; parent: TextChannel | null };
-	guildPublicThreadChannel: ThreadChannel & { type: ChannelType.PublicThread; parent: TextChannel | null };
-	guildStageVoiceChannel: StageChannel;
-	guildTextChannel: TextChannel;
-	guildThreadChannel: ThreadChannel;
-	guildVoiceChannel: VoiceChannel;
-	hyperlink: URL;
-	integer: number;
-	member: GuildMember;
-	message: Message;
-	number: number;
-	role: Role;
-	string: string;
-	url: URL;
-	user: User;
-	enum: string;
-}
-
-/**
- * The callback used for {@link Args.nextMaybe} and {@link Args.next}.
- */
-export interface ArgsNextCallback<T> {
-	/**
-	 * The value to be mapped.
-	 */
-	(value: CommandInteraction): Option<T>;
-}
-
-export type ResultType<T> = Result<T, UserError | ArgumentError<T>>;
-export type ArrayResultType<T> = Result<T[], UserError | ArgumentError<T>>;

@@ -1,5 +1,5 @@
-import type { ChannelTypes, GuildBasedChannelTypes } from '@sapphire/discord.js-utilities';
-import { Result, type Option } from '@sapphire/result';
+import type { AnyInteraction, ChannelTypes, GuildBasedChannelTypes } from '@sapphire/discord.js-utilities';
+import { Result } from '@sapphire/result';
 import type {
 	CategoryChannel,
 	ChannelType,
@@ -15,10 +15,13 @@ import type {
 	VoiceChannel
 } from 'discord.js';
 import { ArgumentError } from '../errors/ArgumentError';
-import type { UserError } from '../errors/UserError';
+import { UserError } from '../errors/UserError';
 import type { EmojiObject } from '../resolvers/emoji';
 import type { Argument, IArgument } from '../structures/Argument';
 import type { Awaitable } from '@sapphire/utilities';
+import { Identifiers } from '../errors/Identifiers';
+import { container } from '@sapphire/pieces';
+import type { Command } from '../structures/Command';
 
 export abstract class Args {
 	public abstract start(): this;
@@ -28,9 +31,32 @@ export abstract class Args {
 	public abstract rest<T extends ArgsOptions>(options: T): Promise<InferArgReturnType<T>>;
 	public abstract repeatResult<T extends ArgsOptions>(options: T): Promise<ArrayResultType<InferArgReturnType<T>>>;
 	public abstract repeat<T extends ArgsOptions>(options: T): Promise<InferArgReturnType<T>[]>;
-	public abstract peekResult<T extends ArgsOptions>(options: T): Promise<ResultType<InferArgReturnType<T>>>;
-	public abstract peek<T extends ArgsOptions>(options: T): Promise<InferArgReturnType<T>>;
-	// nextMaybe, next, getFlags, getOptionResult, getOption, getOptionsResult, getOptions should only go on message args
+	public abstract peekResult<T extends PeekArgsOptions>(options: T): Promise<ResultType<InferArgReturnType<T>>>;
+	public abstract peek<T extends PeekArgsOptions>(options: T): Promise<InferArgReturnType<T>>;
+
+	protected unavailableArgument<T>(type: string | IArgument<T>): Result.Err<UserError> {
+		const name = typeof type === 'string' ? type : type.name;
+		return Result.err(
+			new UserError({
+				identifier: Identifiers.ArgsUnavailable,
+				message: `The argument "${name}" was not found.`,
+				context: { name, ...this.toJSON() }
+			})
+		);
+	}
+
+	protected missingArguments(): Result.Err<UserError> {
+		return Result.err(new UserError({ identifier: Identifiers.ArgsMissing, message: 'There are no more arguments.', context: this.toJSON() }));
+	}
+
+	/**
+	 * Resolves an argument.
+	 * @param arg The argument name or {@link IArgument} instance.
+	 */
+	protected resolveArgument<T>(arg: keyof ArgType | IArgument<T>): IArgument<T> | undefined {
+		if (typeof arg === 'object') return arg;
+		return container.stores.get('arguments').get(arg as string) as IArgument<T> | undefined;
+	}
 
 	/**
 	 * Converts a callback into a usable argument.
@@ -56,6 +82,46 @@ export abstract class Args {
 	public static error<T>(options: ArgumentError.Options<T>): Result.Err<ArgumentError<T>> {
 		return Result.err(new ArgumentError<T>(options));
 	}
+
+	/**
+	 * Defines the `JSON.stringify` override.
+	 */
+	public abstract toJSON(): ArgsJson;
+}
+
+export interface ArgsJson {
+	message: Message | AnyInteraction;
+	command: Command;
+	commandContext: Record<PropertyKey, unknown>;
+}
+
+export interface ArgType {
+	boolean: boolean;
+	channel: ChannelTypes;
+	date: Date;
+	dmChannel: DMChannel;
+	emoji: EmojiObject;
+	float: number;
+	guildCategoryChannel: CategoryChannel;
+	guildChannel: GuildBasedChannelTypes;
+	guildNewsChannel: NewsChannel;
+	guildNewsThreadChannel: ThreadChannel & { type: ChannelType.AnnouncementThread; parent: NewsChannel | null };
+	guildPrivateThreadChannel: ThreadChannel & { type: ChannelType.PrivateThread; parent: TextChannel | null };
+	guildPublicThreadChannel: ThreadChannel & { type: ChannelType.PublicThread; parent: TextChannel | null };
+	guildStageVoiceChannel: StageChannel;
+	guildTextChannel: TextChannel;
+	guildThreadChannel: ThreadChannel;
+	guildVoiceChannel: VoiceChannel;
+	hyperlink: URL;
+	integer: number;
+	member: GuildMember;
+	message: Message;
+	number: number;
+	role: Role;
+	string: string;
+	url: URL;
+	user: User;
+	enum: string;
 }
 
 export interface ArgsOptions<T = unknown, K extends keyof ArgType = keyof ArgType>
@@ -125,13 +191,3 @@ export interface ArgType {
 
 export type ResultType<T> = Result<T, UserError | ArgumentError<T>>;
 export type ArrayResultType<T> = Result<T[], UserError | ArgumentError<T>>;
-
-/**
- * The callback used for {@link Args.nextMaybe} and {@link Args.next}.
- */
-export interface ArgsNextCallback<T> {
-	/**
-	 * The value to be mapped.
-	 */
-	(value: string): Option<T>;
-}

@@ -6,6 +6,7 @@ import type { ArgumentError } from '../errors/ArgumentError';
 import { Args } from '../parsers/Args';
 import { Command } from './Command';
 import type { AnyInteraction } from '@sapphire/discord.js-utilities';
+import type { ChatInputCommand, MessageCommand } from '../types/CommandTypes';
 
 /**
  * Defines a synchronous result of an {@link Argument}, check {@link Argument.AsyncResult} for the asynchronous version.
@@ -135,7 +136,7 @@ export interface ArgumentContext<T = unknown> extends Record<PropertyKey, unknow
 	argument: IArgument<T>;
 	args: Args;
 	messageOrInteraction: Message | AnyInteraction;
-	command: Command;
+	command: MessageCommand | ChatInputCommand;
 	commandContext: Record<PropertyKey, unknown>;
 	minimum?: number;
 	maximum?: number;

@@ -3,35 +3,39 @@ import { Option, Result } from '@sapphire/result';
 import { type Parameter } from '@sapphire/lexure';
 
 export class ChatInputParser {
-	public position: number = 0;
+	public used: Set<CommandInteractionOption> = new Set();
 
 	public constructor(public interaction: CommandInteraction) {}
 
 	public get finished(): boolean {
-		return this.position === this.interaction.options.data.length;
+		return this.used.size === this.interaction.options.data.length;
 	}
 
 	public reset(): void {
-		this.position = 0;
+		this.used.clear();
 	}
 
-	public save(): number {
-		return this.position;
+	public save(): Set<CommandInteractionOption> {
+		return new Set(this.used);
 	}
 
-	public restore(state: number): void {
-		this.position = state;
+	public restore(state: Set<CommandInteractionOption>): void {
+		this.used = state;
 	}
 
 	public async singleParseAsync<T, E>(
+		name: string,
 		predicate: (arg: CommandInteractionOption) => Promise<Result<T, E>>,
 		useAnyways?: boolean
 	): Promise<Result<T, E | null>> {
 		if (this.finished) return Result.err(null);
 
-		const result = await predicate(this.interaction.options.data[this.position]);
+		const option = this.interaction.options.data.find((option) => option.name === name);
+		if (!option) return Result.err(null);
+
+		const result = await predicate(option);
 		if (result.isOk() || useAnyways) {
-			this.position++;
+			this.used.add(option);
 		}
 		return result;
 	}
