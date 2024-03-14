@@ -90,7 +90,7 @@ export abstract class Args {
 }
 
 export interface ArgsJson {
-	message: Message | AnyInteraction;
+	messageOrInteraction: Message | AnyInteraction;
 	command: Command;
 	commandContext: Record<PropertyKey, unknown>;
 }

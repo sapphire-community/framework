@@ -710,7 +710,7 @@ export class MessageArgs extends Args {
 	 * Defines the `JSON.stringify` override.
 	 */
 	public toJSON(): ArgsJson {
-		return { message: this.message, command: this.command, commandContext: this.commandContext };
+		return { messageOrInteraction: this.message, command: this.command, commandContext: this.commandContext };
 	}
 }
 

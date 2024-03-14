@@ -543,6 +543,6 @@ export class ChatInputCommandArgs extends Args {
 	 * Defines the `JSON.stringify` override.
 	 */
 	public toJSON(): ArgsJson {
-		return { message: this.interaction, command: this.command, commandContext: this.commandContext };
+		return { messageOrInteraction: this.interaction, command: this.command, commandContext: this.commandContext };
 	}
 }
