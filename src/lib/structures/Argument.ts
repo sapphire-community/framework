@@ -137,7 +137,7 @@ export interface ArgumentContext<T = unknown> extends Record<PropertyKey, unknow
 	args: Args;
 	messageOrInteraction: Message | AnyInteraction;
 	command: MessageCommand | ChatInputCommand;
-	commandContext: Record<PropertyKey, unknown>;
+	commandContext: MessageCommand.RunContext | ChatInputCommand.RunContext;
 	minimum?: number;
 	maximum?: number;
 	inclusive?: boolean;

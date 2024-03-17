@@ -33,7 +33,7 @@ export class MessageArgs extends Args {
 	/**
 	 * The context of the command being run.
 	 */
-	public readonly commandContext: Record<PropertyKey, unknown>;
+	public readonly commandContext: MessageCommand.RunContext;
 
 	/**
 	 * The internal Lexure parser.
@@ -47,7 +47,7 @@ export class MessageArgs extends Args {
 	 */
 	private readonly states: ArgumentStream.State[] = [];
 
-	public constructor(message: Message, command: MessageCommand, parser: ArgumentStream, context: Record<PropertyKey, unknown>) {
+	public constructor(message: Message, command: MessageCommand, parser: ArgumentStream, context: MessageCommand.RunContext) {
 		super();
 		this.message = message;
 		this.command = command;

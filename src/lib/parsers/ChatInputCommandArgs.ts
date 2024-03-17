@@ -34,7 +34,7 @@ export class ChatInputCommandArgs extends Args {
 	/**
 	 * The context of the command being run.
 	 */
-	public readonly commandContext: Record<PropertyKey, unknown>;
+	public readonly commandContext: ChatInputCommand.RunContext;
 
 	/**
 	 * The internal parser.
@@ -52,7 +52,7 @@ export class ChatInputCommandArgs extends Args {
 		interaction: ChatInputCommandInteraction,
 		command: ChatInputCommand,
 		parser: ChatInputParser,
-		context: Record<PropertyKey, unknown>
+		context: ChatInputCommand.RunContext
 	) {
 		super();
 		this.interaction = interaction;
