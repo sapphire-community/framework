@@ -145,7 +145,7 @@ export interface RepeatArgsOptions extends ArgsOptions {
 
 export interface PeekArgsOptions<T = unknown, K extends keyof ArgType = keyof ArgType> extends Omit<ArgsOptions, 'type'> {
 	name: string;
-	type: () => Awaitable<Argument.Result<T>> | K;
+	type: (() => Awaitable<Argument.Result<T>>) | K;
 }
 
 export type InferArgReturnType<T extends ArgsOptions | PeekArgsOptions> = T extends ArgsOptions
