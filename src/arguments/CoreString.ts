@@ -1,4 +1,5 @@
 import { container } from '@sapphire/pieces';
+import { ApplicationCommandOptionType, type CommandInteractionOption } from 'discord.js';
 import { Identifiers } from '../lib/errors/Identifiers';
 import { resolveString } from '../lib/resolvers/string';
 import { Argument } from '../lib/structures/Argument';
@@ -10,10 +11,11 @@ export class CoreArgument extends Argument<string> {
 	} as const;
 
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'string' });
+		super(context, { name: 'string', optionType: ApplicationCommandOptionType.String });
 	}
 
-	public run(parameter: string, context: Argument.Context): Argument.Result<string> {
+	public run(parameter: string | CommandInteractionOption, context: Argument.Context): Argument.Result<string> {
+		if (typeof parameter !== 'string') return this.ok(parameter.value as string);
 		const resolved = resolveString(parameter, { minimum: context?.minimum, maximum: context?.maximum });
 		return resolved.mapErrInto((identifier) =>
 			this.error({

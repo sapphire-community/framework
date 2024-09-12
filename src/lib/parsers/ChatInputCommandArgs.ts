@@ -4,6 +4,7 @@ import type { ChatInputCommandInteraction, CommandInteractionOption } from 'disc
 import { ArgumentError } from '../errors/ArgumentError';
 import { UserError } from '../errors/UserError';
 import { Command } from '../structures/Command';
+import type { ChatInputCommand } from '../types/CommandTypes';
 import {
 	Args,
 	type ArgsJson,
@@ -15,7 +16,6 @@ import {
 	type ResultType
 } from './Args';
 import type { ChatInputParser } from './ChatInputParser';
-import type { ChatInputCommand } from '../types/CommandTypes';
 
 /**
  * The argument parser to be used in {@link Command}.
@@ -120,16 +120,18 @@ export class ChatInputCommandArgs extends Args {
 		const argument = this.resolveArgument(options.type);
 		if (!argument) return this.unavailableArgument(options.type);
 
-		const result = await this.parser.singleParseAsync(options.name, async (arg) =>
-			argument.run(arg, {
+		const result = await this.parser.singleParseAsync(options.name, async (arg) => {
+			if (arg.type !== argument.optionType) return Args.error({ argument, identifier: argument.name, parameter: arg });
+
+			return argument.run(arg, {
 				args: this,
 				argument,
 				messageOrInteraction: this.interaction,
 				command: this.command,
 				commandContext: this.commandContext,
 				...options
-			})
-		);
+			});
+		});
 		if (result.isErrAnd((value) => value === null)) {
 			return this.missingArguments();
 		}
@@ -311,16 +313,18 @@ export class ChatInputCommandArgs extends Args {
 		const output: InferArgReturnType<T>[] = [];
 
 		for (let i = 0, times = options.times ?? Infinity; i < times; i++) {
-			const result = await this.parser.singleParseAsync(options.name, async (arg) =>
-				argument.run(arg, {
+			const result = await this.parser.singleParseAsync(options.name, async (arg) => {
+				if (arg.type !== argument.optionType) return Args.error({ argument, identifier: argument.name, parameter: arg });
+
+				return argument.run(arg, {
 					args: this,
 					argument,
 					messageOrInteraction: this.interaction,
 					command: this.command,
 					commandContext: this.commandContext,
 					...options
-				})
-			);
+				});
+			});
 
 			if (result.isErr()) {
 				const error = result.unwrapErr();

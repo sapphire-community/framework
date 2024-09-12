@@ -1,3 +1,4 @@
+import type { CommandInteractionOption } from 'discord.js';
 import type { IArgument } from '../structures/Argument';
 import { UserError } from './UserError';
 
@@ -8,7 +9,7 @@ import { UserError } from './UserError';
  */
 export class ArgumentError<T = unknown> extends UserError {
 	public readonly argument: IArgument<T>;
-	public readonly parameter: string;
+	public readonly parameter: string | CommandInteractionOption;
 
 	public constructor(options: ArgumentError.Options<T>) {
 		super({ ...options, identifier: options.identifier ?? options.argument.name });
@@ -38,7 +39,7 @@ export namespace ArgumentError {
 		 * The parameter that failed to be parsed.
 		 * @since 1.0.0
 		 */
-		parameter: string;
+		parameter: string | CommandInteractionOption;
 
 		/**
 		 * The identifier.

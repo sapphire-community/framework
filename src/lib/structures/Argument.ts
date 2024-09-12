@@ -1,12 +1,13 @@
+import type { AnyInteraction } from '@sapphire/discord.js-utilities';
 import { AliasPiece } from '@sapphire/pieces';
 import type { Result } from '@sapphire/result';
 import type { Awaitable } from '@sapphire/utilities';
 import type { CommandInteractionOption, Message } from 'discord.js';
+import { ApplicationCommandOptionType } from 'discord.js';
 import type { ArgumentError } from '../errors/ArgumentError';
 import { Args } from '../parsers/Args';
-import { Command } from './Command';
-import type { AnyInteraction } from '@sapphire/discord.js-utilities';
 import type { ChatInputCommand, MessageCommand } from '../types/CommandTypes';
+import { Command } from './Command';
 
 /**
  * Defines a synchronous result of an {@link Argument}, check {@link Argument.AsyncResult} for the asynchronous version.
@@ -30,8 +31,13 @@ export interface IArgument<T> {
 	readonly name: string;
 
 	/**
+	 * The required chat input command option type, this will be checked before {@link Argument.run} is called.
+	 */
+	readonly optionType: ApplicationCommandOptionType;
+
+	/**
 	 * The method which is called when invoking the argument.
-	 * @param parameter The string parameter to parse.
+	 * @param parameter The string or {@link CommandInteractionOption} to be parsed.
 	 * @param context The context for the method call, contains the message, command, and other options.
 	 */
 	run(parameter: string | CommandInteractionOption, context: Argument.Context<T>): Argument.AwaitableResult<T>;
@@ -107,11 +113,14 @@ export abstract class Argument<T = unknown, Options extends Argument.Options = A
 	extends AliasPiece<Options, 'arguments'>
 	implements IArgument<T>
 {
+	public optionType: ApplicationCommandOptionType;
+
 	public constructor(context: Argument.LoaderContext, options: Options = {} as Options) {
 		super(context, options);
+		this.optionType = options.optionType;
 	}
 
-	public abstract run(parameter: string, context: Argument.Context<T>): Argument.AwaitableResult<T>;
+	public abstract run(parameter: string | CommandInteractionOption, context: Argument.Context<T>): Argument.AwaitableResult<T>;
 
 	/**
 	 * Wraps a value into a successful value.
@@ -130,7 +139,9 @@ export abstract class Argument<T = unknown, Options extends Argument.Options = A
 	}
 }
 
-export interface ArgumentOptions extends AliasPiece.Options {}
+export interface ArgumentOptions extends AliasPiece.Options {
+	optionType: ApplicationCommandOptionType;
+}
 
 export interface ArgumentContext<T = unknown> extends Record<PropertyKey, unknown> {
 	argument: IArgument<T>;

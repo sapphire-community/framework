@@ -1,6 +1,9 @@
 import type { AnyInteraction, ChannelTypes, GuildBasedChannelTypes } from '@sapphire/discord.js-utilities';
+import { container } from '@sapphire/pieces';
 import { Result } from '@sapphire/result';
+import type { Awaitable } from '@sapphire/utilities';
 import type {
+	ApplicationCommandOptionType,
 	CategoryChannel,
 	ChannelType,
 	DMChannel,
@@ -15,12 +18,10 @@ import type {
 	VoiceChannel
 } from 'discord.js';
 import { ArgumentError } from '../errors/ArgumentError';
+import { Identifiers } from '../errors/Identifiers';
 import { UserError } from '../errors/UserError';
 import type { EmojiObject } from '../resolvers/emoji';
 import type { Argument, IArgument } from '../structures/Argument';
-import type { Awaitable } from '@sapphire/utilities';
-import { Identifiers } from '../errors/Identifiers';
-import { container } from '@sapphire/pieces';
 import type { Command } from '../structures/Command';
 
 export abstract class Args {
@@ -63,8 +64,8 @@ export abstract class Args {
 	 * @param cb The callback to convert into an {@link IArgument}.
 	 * @param name The name of the argument.
 	 */
-	public static make<T>(cb: IArgument<T>['run'], name = ''): IArgument<T> {
-		return { run: cb, name };
+	public static make<T>(cb: IArgument<T>['run'], optionType: ApplicationCommandOptionType, name = ''): IArgument<T> {
+		return { run: cb, optionType, name };
 	}
 
 	/**

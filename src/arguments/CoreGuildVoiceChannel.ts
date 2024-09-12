@@ -1,15 +1,16 @@
 import { container } from '@sapphire/pieces';
-import type { VoiceChannel } from 'discord.js';
+import { ApplicationCommandOptionType, type CommandInteractionOption, type VoiceChannel } from 'discord.js';
 import { Identifiers } from '../lib/errors/Identifiers';
 import { resolveGuildVoiceChannel } from '../lib/resolvers/guildVoiceChannel';
 import { Argument } from '../lib/structures/Argument';
 
 export class CoreArgument extends Argument<VoiceChannel> {
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'guildVoiceChannel' });
+		super(context, { name: 'guildVoiceChannel', optionType: ApplicationCommandOptionType.Channel });
 	}
 
-	public run(parameter: string, context: Argument.Context): Argument.Result<VoiceChannel> {
+	public run(parameter: string | CommandInteractionOption, context: Argument.Context): Argument.Result<VoiceChannel> {
+		if (typeof parameter !== 'string') parameter = parameter.channel!.id;
 		const { guild } = context.messageOrInteraction;
 		if (!guild) {
 			return this.error({
