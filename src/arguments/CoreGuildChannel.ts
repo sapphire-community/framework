@@ -1,16 +1,18 @@
 import type { GuildBasedChannelTypes } from '@sapphire/discord.js-utilities';
 import { container } from '@sapphire/pieces';
+import { ApplicationCommandOptionType, type CommandInteractionOption } from 'discord.js';
 import { Identifiers } from '../lib/errors/Identifiers';
 import { resolveGuildChannel } from '../lib/resolvers/guildChannel';
 import { Argument } from '../lib/structures/Argument';
 
 export class CoreArgument extends Argument<GuildBasedChannelTypes> {
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'guildChannel' });
+		super(context, { name: 'guildChannel', optionType: ApplicationCommandOptionType.Channel });
 	}
 
-	public run(parameter: string, context: Argument.Context): Argument.Result<GuildBasedChannelTypes> {
-		const { guild } = context.message;
+	public run(parameter: string | CommandInteractionOption, context: Argument.Context): Argument.Result<GuildBasedChannelTypes> {
+		if (typeof parameter !== 'string') parameter = parameter.channel!.id;
+		const { guild } = context.messageOrInteraction;
 		if (!guild) {
 			return this.error({
 				parameter,

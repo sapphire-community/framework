@@ -1,16 +1,17 @@
 import { container } from '@sapphire/pieces';
-import type { StageChannel } from 'discord.js';
+import { ApplicationCommandOptionType, type CommandInteractionOption, type StageChannel } from 'discord.js';
 import { Identifiers } from '../lib/errors/Identifiers';
 import { resolveGuildStageVoiceChannel } from '../lib/resolvers/guildStageVoiceChannel';
 import { Argument } from '../lib/structures/Argument';
 
 export class CoreArgument extends Argument<StageChannel> {
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'guildStageVoiceChannel' });
+		super(context, { name: 'guildStageVoiceChannel', optionType: ApplicationCommandOptionType.Channel });
 	}
 
-	public run(parameter: string, context: Argument.Context): Argument.Result<StageChannel> {
-		const { guild } = context.message;
+	public run(parameter: string | CommandInteractionOption, context: Argument.Context): Argument.Result<StageChannel> {
+		if (typeof parameter !== 'string') parameter = parameter.channel!.id;
+		const { guild } = context.messageOrInteraction;
 		if (!guild) {
 			return this.error({
 				parameter,

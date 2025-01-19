@@ -1,4 +1,5 @@
 import { container } from '@sapphire/pieces';
+import { ApplicationCommandOptionType, type CommandInteractionOption } from 'discord.js';
 import { Identifiers } from '../lib/errors/Identifiers';
 import { resolveDate } from '../lib/resolvers/date';
 import { Argument } from '../lib/structures/Argument';
@@ -11,10 +12,11 @@ export class CoreArgument extends Argument<Date> {
 	} as const;
 
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'date' });
+		super(context, { name: 'date', optionType: ApplicationCommandOptionType.String });
 	}
 
-	public run(parameter: string, context: Argument.Context): Argument.Result<Date> {
+	public run(parameter: string | CommandInteractionOption, context: Argument.Context): Argument.Result<Date> {
+		if (typeof parameter !== 'string') parameter = parameter.value as string;
 		const resolved = resolveDate(parameter, { minimum: context.minimum, maximum: context.maximum });
 		return resolved.mapErrInto((identifier) =>
 			this.error({

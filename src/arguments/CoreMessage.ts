@@ -1,18 +1,19 @@
 import { container } from '@sapphire/pieces';
-import type { Message } from 'discord.js';
+import { ApplicationCommandOptionType, type CommandInteractionOption, type Message } from 'discord.js';
 import { resolveMessage } from '../lib/resolvers/message';
 import { Argument } from '../lib/structures/Argument';
 import type { MessageArgumentContext } from '../lib/types/ArgumentContexts';
 
 export class CoreArgument extends Argument<Message> {
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'message' });
+		super(context, { name: 'message', optionType: ApplicationCommandOptionType.String });
 	}
 
-	public async run(parameter: string, context: MessageArgumentContext): Argument.AsyncResult<Message> {
-		const channel = context.channel ?? context.message.channel;
+	public async run(parameter: string | CommandInteractionOption, context: MessageArgumentContext): Argument.AsyncResult<Message> {
+		if (typeof parameter !== 'string') parameter = parameter.value as string;
+		const channel = context.channel ?? context.messageOrInteraction.channel;
 		const resolved = await resolveMessage(parameter, {
-			messageOrInteraction: context.message,
+			messageOrInteraction: context.messageOrInteraction,
 			channel: context.channel,
 			scan: context.scan ?? false
 		});

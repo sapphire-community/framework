@@ -1,5 +1,5 @@
 import { container } from '@sapphire/pieces';
-import type { GuildMember } from 'discord.js';
+import { ApplicationCommandOptionType, type CommandInteractionOption, type GuildMember } from 'discord.js';
 import { Identifiers } from '../lib/errors/Identifiers';
 import { resolveMember } from '../lib/resolvers/member';
 import { Argument } from '../lib/structures/Argument';
@@ -7,11 +7,12 @@ import type { MemberArgumentContext } from '../lib/types/ArgumentContexts';
 
 export class CoreArgument extends Argument<GuildMember> {
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'member' });
+		super(context, { name: 'member', optionType: ApplicationCommandOptionType.User });
 	}
 
-	public async run(parameter: string, context: MemberArgumentContext): Argument.AsyncResult<GuildMember> {
-		const { guild } = context.message;
+	public async run(parameter: string | CommandInteractionOption, context: MemberArgumentContext): Argument.AsyncResult<GuildMember> {
+		if (typeof parameter !== 'string') parameter = parameter.user!.id;
+		const { guild } = context.messageOrInteraction;
 
 		if (!guild) {
 			return this.error({

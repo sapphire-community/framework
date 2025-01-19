@@ -1,16 +1,17 @@
 import { container } from '@sapphire/pieces';
-import type { ThreadChannel } from 'discord.js';
+import { ApplicationCommandOptionType, type CommandInteractionOption, type ThreadChannel } from 'discord.js';
 import { Identifiers } from '../lib/errors/Identifiers';
 import { resolveGuildNewsThreadChannel } from '../lib/resolvers/guildNewsThreadChannel';
 import { Argument } from '../lib/structures/Argument';
 
 export class CoreArgument extends Argument<ThreadChannel> {
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'guildNewsThreadChannel' });
+		super(context, { name: 'guildNewsThreadChannel', optionType: ApplicationCommandOptionType.Channel });
 	}
 
-	public run(parameter: string, context: Argument.Context): Argument.Result<ThreadChannel> {
-		const { guild } = context.message;
+	public run(parameter: string | CommandInteractionOption, context: Argument.Context): Argument.Result<ThreadChannel> {
+		if (typeof parameter !== 'string') parameter = parameter.channel!.id;
+		const { guild } = context.messageOrInteraction;
 		if (!guild) {
 			return this.error({
 				parameter,

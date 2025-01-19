@@ -11,12 +11,13 @@ export class CoreListener extends Listener<typeof Events.ChatInputCommandAccepte
 
 	public async run(payload: ChatInputCommandAcceptedPayload) {
 		const { command, context, interaction } = payload;
+		const args = await command.chatInputPreParse(interaction, context);
 
 		const result = await Result.fromAsync(async () => {
 			this.container.client.emit(Events.ChatInputCommandRun, interaction, command, { ...payload });
 
 			const stopwatch = new Stopwatch();
-			const result = await command.chatInputRun(interaction, context);
+			const result = await command.chatInputRun(interaction, args, context);
 			const { duration } = stopwatch.stop();
 
 			this.container.client.emit(Events.ChatInputCommandSuccess, { ...payload, result, duration });

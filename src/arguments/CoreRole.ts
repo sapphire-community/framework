@@ -1,16 +1,17 @@
 import { container } from '@sapphire/pieces';
-import type { Role } from 'discord.js';
+import { ApplicationCommandOptionType, type CommandInteractionOption, type Role } from 'discord.js';
 import { Identifiers } from '../lib/errors/Identifiers';
 import { resolveRole } from '../lib/resolvers/role';
 import { Argument } from '../lib/structures/Argument';
 
 export class CoreArgument extends Argument<Role> {
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'role' });
+		super(context, { name: 'role', optionType: ApplicationCommandOptionType.Role });
 	}
 
-	public async run(parameter: string, context: Argument.Context): Argument.AsyncResult<Role> {
-		const { guild } = context.message;
+	public async run(parameter: string | CommandInteractionOption, context: Argument.Context): Argument.AsyncResult<Role> {
+		if (typeof parameter !== 'string') parameter = parameter.role!.id;
+		const { guild } = context.messageOrInteraction;
 		if (!guild) {
 			return this.error({
 				parameter,

@@ -1,16 +1,17 @@
 import { container } from '@sapphire/pieces';
-import type { NewsChannel } from 'discord.js';
+import { ApplicationCommandOptionType, type CommandInteractionOption, type NewsChannel } from 'discord.js';
 import { Identifiers } from '../lib/errors/Identifiers';
 import { resolveGuildNewsChannel } from '../lib/resolvers/guildNewsChannel';
 import { Argument } from '../lib/structures/Argument';
 
 export class CoreArgument extends Argument<NewsChannel> {
 	public constructor(context: Argument.LoaderContext) {
-		super(context, { name: 'guildNewsChannel' });
+		super(context, { name: 'guildNewsChannel', optionType: ApplicationCommandOptionType.Channel });
 	}
 
-	public run(parameter: string, context: Argument.Context): Argument.Result<NewsChannel> {
-		const { guild } = context.message;
+	public run(parameter: string | CommandInteractionOption, context: Argument.Context): Argument.Result<NewsChannel> {
+		if (typeof parameter !== 'string') parameter = parameter.channel!.id;
+		const { guild } = context.messageOrInteraction;
 		if (!guild) {
 			return this.error({
 				parameter,
